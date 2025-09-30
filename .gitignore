@@ -20,8 +20,8 @@ Thumbs.db
 # Database
 *.db
 *.sqlite
-db/*.db-wal
-db/*.db-shm
+database.db-wal
+database.db-shm
 
 # Logs
 npm-debug.log*
