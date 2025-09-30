@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import "./db";
 import { roomsRouter } from "./Routes/roomsRoutes";
+import { freeSlotsRouter } from "./Routes/freeSlotsRoutes";
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/rooms", roomsRouter);
+app.use("/api/free-slots", freeSlotsRouter);
 
 // Start server
 app.listen(PORT, () => {
