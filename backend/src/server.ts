@@ -1,7 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import { db } from "./db";
+import "./db";
+import { roomsRouter } from "./Routes/roomsRoutes";
 
 dotenv.config();
 
@@ -17,12 +18,7 @@ app.get("/", (req, res) => {
   res.send("General Kenobi!");
 });
 
-app.get("/api/rooms", (req, res) => {
-  const rooms = db
-    .prepare("SELECT id, name, capacity FROM rooms ORDER BY name")
-    .all();
-  res.json(rooms);
-});
+app.use("/api/rooms", roomsRouter);
 
 // Start server
 app.listen(PORT, () => {
