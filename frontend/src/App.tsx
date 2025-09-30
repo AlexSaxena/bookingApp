@@ -7,10 +7,17 @@ function App() {
 
   if (step === "landing") {
     return (
-      <>
-        <p>Landing</p>
-        <button onClick={() => setStep("booking")}>Continue</button>
-      </>
+      <div className="min-h-screen grid place-items-center bg-gray-50">
+        <div className="max-w-sm w-full p-6 text-center">
+          <h1 className="text-4xl font-bold mb-8 text-left">Boka ett rum</h1>
+          <button
+            onClick={() => setStep("booking")}
+            className="w-full px-6 py-3 rounded bg-black text-white"
+          >
+            Boka
+          </button>
+        </div>
+      </div>
     );
   }
   if (step === "booking") {
