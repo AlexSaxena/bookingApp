@@ -4,6 +4,7 @@ import cors from "cors";
 import "./db";
 import { roomsRouter } from "./Routes/roomsRoutes";
 import { freeSlotsRouter } from "./Routes/freeSlotsRoutes";
+import { bookingRouter } from "./Routes/bookingRoutes";
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/rooms", roomsRouter);
 app.use("/api/free-slots", freeSlotsRouter);
+app.use("/api/bookings", bookingRouter);
 
 // Start server
 app.listen(PORT, () => {
