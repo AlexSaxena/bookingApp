@@ -1,20 +1,12 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import Database from "better-sqlite3";
-import path from "path";
+import { db } from "./db";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-
-// Initialize database
-const DB_PATH = path.resolve(__dirname, "../db/database.db");
-const db = new Database(DB_PATH);
-db.pragma("foreign_keys = ON");
-db.pragma("journal_mode = WAL");
-db.pragma("busy_timeout = 3000");
 
 // Middleware
 app.use(cors());
