@@ -9,7 +9,6 @@ import {
 import RoomFilter from "./RoomFilter";
 
 type Step = "landing" | "booking" | "personalInfo";
-type Column = { date: string; room: Room };
 
 // Helper functions to format the Date
 function fmtLocalISO(date: Date) {
@@ -31,23 +30,6 @@ function addDays(iso: string, days: number) {
   return fmtLocalISO(date); // back to local YYYY-MM-DD
 }
 
-function buildColumns(days: string[], rooms: Room[]): Column[] {
-  const cols: Column[] = [];
-  for (const d of days) for (const r of rooms) cols.push({ date: d, room: r });
-  return cols;
-}
-
-function isFreeSlot(
-  freeSlots: FreeSlot[],
-  roomId: number,
-  date: string,
-  hour: number
-) {
-  return freeSlots.some(
-    (s) => s.room.id === roomId && s.date === date && s.hour === hour
-  );
-}
-
 function App() {
   const [step, setStep] = useState<Step>("landing");
   const [name, setName] = useState<string>("");
@@ -62,9 +44,6 @@ function App() {
   const days = [startDate, addDays(startDate, 1), addDays(startDate, 2)];
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedRoomIds, setSelectedRoomIds] = useState<number[]>([]);
-  const visibleRooms = selectedRoomIds.length
-    ? rooms.filter((r) => selectedRoomIds.includes(r.id))
-    : rooms;
 
   useEffect(() => {
     getAllRooms()
@@ -96,112 +75,145 @@ function App() {
   }
 
   if (step === "booking") {
-    const columns = buildColumns(days, visibleRooms);
+    const dayCols = days; // exactly 3 columns
     const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16];
+
+    // helper: free slots for a given day+hour limited by current room filter
+    const visibleIdSet = new Set(
+      selectedRoomIds.length ? selectedRoomIds : rooms.map((room) => room.id)
+    );
+    const slotsFor = (date: string, hour: number) =>
+      freeSlots.filter(
+        (slot) =>
+          slot.date === date &&
+          slot.hour === hour &&
+          visibleIdSet.has(slot.room.id)
+      );
 
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-5xl mx-auto p-6 space-y-4">
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">Välj en tid</h1>
+          {/* Row 1 Title & Filter */}
+          <h1 className="text-2xl font-semibold">Välj en tid</h1>
+          <div className="flex-shrink-0">
             <RoomFilter
               rooms={rooms}
               selectedIds={selectedRoomIds}
               onChange={setSelectedRoomIds}
             />
-            <div className="ml-auto flex gap-2">
-              <button
-                className="border px-3 py-1 rounded"
-                onClick={() => setStartDate(addDays(startDate, -3))}
-              >
-                ◀︎
-              </button>
-              <span className="text-sm text-gray-600">
-                {days[0]} - {days[2]}
-              </span>
-              <button
-                className="border px-3 py-1 rounded"
-                onClick={() => setStartDate(addDays(startDate, 3))}
-              >
-                ▶︎
-              </button>
+          </div>
+          {/* Row 2 date nav */}
+          <div className="flex items-center">
+            <div className="flex-1 flex justify-center">
+              <div className="flex items-center gap-24 md:gap-10">
+                <button
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-300 bg-white hover:bg-gray-50"
+                  onClick={() => setStartDate(addDays(startDate, -3))}
+                >
+                  ◀︎
+                </button>
+                {/* Formats date to text day-month */}
+                <span className="text-sm text-gray-600">
+                  {new Date(days[0]).toLocaleDateString("sv-SE", {
+                    day: "numeric",
+                    month: "short",
+                  })}
+                  {" - "}
+                  {new Date(days[2]).toLocaleDateString("sv-SE", {
+                    day: "numeric",
+                    month: "short",
+                  })}
+                </span>
+                <button
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-300 bg-white hover:bg-gray-50"
+                  onClick={() => setStartDate(addDays(startDate, 3))}
+                >
+                  ▶︎
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <div
-              className="min-w-[720px] grid"
-              style={{
-                gridTemplateColumns: `120px repeat(${columns.length}, minmax(160px,1fr))`,
-              }}
-            >
-              {/* header row */}
-              <div></div>
-              {columns.map((c) => (
-                <div
-                  key={`${c.date}-${c.room.id}`}
-                  className="p-2 border-b bg-white font-medium"
-                >
-                  {c.date} • {c.room.name} ({c.room.capacity})
-                </div>
-              ))}
-
-              {/* one row per hour */}
-              {hours.map((h) => (
-                <div key={`row-${h}`} className="contents">
-                  {/* left label */}
-                  <div className="p-2 border-r bg-white font-medium">
-                    {String(h).padStart(2, "0")}:00
+          {/* Grid card */}
+          <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="max-h-[calc(100vh-260px)] overflow-auto p-2">
+              <div
+                className="min-w-[560px] grid"
+                style={{
+                  gridTemplateColumns: `repeat(${dayCols.length}, minmax(160px, 1fr))`,
+                }}
+              >
+                {/* header row */}
+                {dayCols.map((date) => (
+                  <div
+                    key={`hdr-${date}`}
+                    className="px-3 py-2 text-sm text-gray-600 border-b text-center"
+                  >
+                    {new Date(date).toLocaleDateString("sv-SE", {
+                      day: "2-digit",
+                      month: "short",
+                    })}
                   </div>
-                  {/* cells */}
-                  {columns.map((c) => {
-                    const free = isFreeSlot(freeSlots, c.room.id, c.date, h);
-                    const selected =
-                      room &&
-                      room.roomId === c.room.id &&
-                      room.date === c.date &&
-                      room.hour === h;
+                ))}
+
+                {/* for each hour, render 3 cells (one per day) */}
+                {hours.map((h) =>
+                  dayCols.map((d) => {
+                    const slotsAt = slotsFor(d, h); // all free rooms for this day+hour
                     return (
-                      <div
-                        key={`${c.date}-${c.room.id}-${h}`}
-                        className="p-2 border bg-gray-50"
-                      >
-                        {free ? (
-                          <button
-                            className={`w-full rounded border px-2 py-2 text-sm ${
-                              selected
-                                ? "bg-black text-white"
-                                : "hover:bg-black hover:text-white"
-                            }`}
-                            onClick={() =>
-                              setRoom({
-                                roomId: c.room.id,
-                                date: c.date,
-                                hour: h,
-                              })
-                            }
-                          >
-                            {c.room.name} {String(h).padStart(2, "0")}:00-
-                            {String(h + 1).padStart(2, "0")}:00
-                          </button>
+                      <div key={`cell-${d}-${h}`} className="p-2 border">
+                        {slotsAt.length ? (
+                          <div className="flex flex-col gap-2">
+                            {slotsAt.map((s) => {
+                              const selected =
+                                room &&
+                                room.roomId === s.room.id &&
+                                room.date === d &&
+                                room.hour === h;
+                              return (
+                                <button
+                                  key={`btn-${s.room.id}-${d}-${h}`}
+                                  onClick={() =>
+                                    setRoom({
+                                      roomId: s.room.id,
+                                      date: d,
+                                      hour: h,
+                                    })
+                                  }
+                                  className={`w-full rounded-lg px-3 py-2 text-sm font-medium border transition
+                                  ${
+                                    selected
+                                      ? "bg-emerald-700 text-white border-emerald-700"
+                                      : "bg-white text-emerald-700 border-emerald-600 hover:bg-emerald-50"
+                                  }`}
+                                >
+                                  {s.room.name} {"("} {s.room.capacity} {")"}
+                                  <br />
+                                  {String(h).padStart(2, "0")}:00-
+                                  {String(h + 1).padStart(2, "0")}:00
+                                </button>
+                              );
+                            })}
+                          </div>
                         ) : (
-                          <div className="text-center text-xs text-gray-400">
-                            Upptagen
+                          <div className="w-full rounded-lg px-3 py-2 text-center text-xs text-gray-400 border border-dashed bg-gray-50">
+                            {/* empty cell */}
                           </div>
                         )}
                       </div>
                     );
-                  })}
-                </div>
-              ))}
+                  })
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="flex justify-end">
+          {/* Footer */}
+          <div className="flex justify-center">
             <button
               disabled={!room}
               onClick={() => setStep("personalInfo")}
-              className="px-6 py-2 rounded bg-black text-white disabled:opacity-50"
+              className="w-full md:w-2xl px-6 py-2 rounded-lg bg-black text-white disabled:opacity-50"
             >
               Nästa
             </button>
@@ -210,6 +222,7 @@ function App() {
       </div>
     );
   }
+
   if (step === "personalInfo") {
     return (
       <div className="min-h-screen grid place-items-center bg-gray-50">
