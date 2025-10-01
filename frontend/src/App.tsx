@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import {
   getAllRooms,
   getAllFreeSlots,
@@ -37,6 +37,26 @@ function App() {
     date: string;
     hour: number;
   } | null>(null);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [freeSlots, setFreeSlots] = useState<FreeSlot[]>([]);
+  const [startDate, setStartDate] = useState(todayISO());
+  const days = [
+    (startDate: string) => addDays(startDate, 1),
+    (startDate: string) => addDays(startDate, 2),
+  ];
+  const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16];
+
+  useEffect(() => {
+    getAllRooms()
+      .then(setRooms)
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    getAllFreeSlots(startDate, days[1](startDate))
+      .then(setFreeSlots)
+      .catch(() => {});
+  }, [startDate]);
 
   if (step === "landing") {
     return (
@@ -59,6 +79,9 @@ function App() {
         <div className="max-w-sm w-full p-6 text-center">
           <h1 className="text-4xl font-bold mb-8 text-left">Välj en tid</h1>
           <div>
+            <p className="text-sm text-gray-600 mb-3">
+              Loaded {rooms.length} rooms, {freeSlots.length} free slots
+            </p>
             <button
               onClick={() =>
                 setRoom({ roomId: 1, date: "2024-07-01", hour: 9 })
@@ -138,3 +161,6 @@ function App() {
 }
 
 export default App;
+function then(setFreeSlots: Dispatch<SetStateAction<FreeSlot[]>>) {
+  throw new Error("Function not implemented.");
+}
