@@ -6,6 +6,7 @@ import {
   type Room,
   type FreeSlot,
 } from "./apiRequests";
+import RoomFilter from "./RoomFilter";
 
 type Step = "landing" | "booking" | "personalInfo";
 type Column = { date: string; room: Room };
@@ -60,6 +61,10 @@ function App() {
   const [startDate, setStartDate] = useState(todayISO());
   const days = [startDate, addDays(startDate, 1), addDays(startDate, 2)];
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [selectedRoomIds, setSelectedRoomIds] = useState<number[]>([]);
+  const visibleRooms = selectedRoomIds.length
+    ? rooms.filter((r) => selectedRoomIds.includes(r.id))
+    : rooms;
 
   useEffect(() => {
     getAllRooms()
@@ -91,7 +96,7 @@ function App() {
   }
 
   if (step === "booking") {
-    const columns = buildColumns(days, rooms);
+    const columns = buildColumns(days, visibleRooms);
     const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16];
 
     return (
@@ -99,6 +104,11 @@ function App() {
         <div className="max-w-5xl mx-auto p-6 space-y-4">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold">Välj en tid</h1>
+            <RoomFilter
+              rooms={rooms}
+              selectedIds={selectedRoomIds}
+              onChange={setSelectedRoomIds}
+            />
             <div className="ml-auto flex gap-2">
               <button
                 className="border px-3 py-1 rounded"
