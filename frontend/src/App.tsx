@@ -1,6 +1,33 @@
 import { useState } from "react";
+import {
+  getAllRooms,
+  getAllFreeSlots,
+  postBooking,
+  type Room,
+  type FreeSlot,
+} from "./apiRequests";
 
 type Step = "landing" | "booking" | "personalInfo" | "confirmation";
+
+// Helper functions to format the Date
+function fmtLocalISO(date: Date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function todayISO() {
+  return fmtLocalISO(new Date()); // local timezone
+}
+
+function addDays(iso: string, days: number) {
+  // Parse as local date (avoid Date("YYYY-MM-DD") dvs UTC)
+  const [y, m, d] = iso.split("-").map(Number);
+  const date = new Date(y, (m ?? 1) - 1, d ?? 1);
+  date.setDate(date.getDate() + days);
+  return fmtLocalISO(date); // back to local YYYY-MM-DD
+}
 
 function App() {
   const [step, setStep] = useState<Step>("landing");
