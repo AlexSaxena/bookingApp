@@ -1,4 +1,4 @@
-import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useState } from "react";
 import {
   getAllRooms,
   getAllFreeSlots,
@@ -40,10 +40,7 @@ function App() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [freeSlots, setFreeSlots] = useState<FreeSlot[]>([]);
   const [startDate, setStartDate] = useState(todayISO());
-  const days = [
-    (startDate: string) => addDays(startDate, 1),
-    (startDate: string) => addDays(startDate, 2),
-  ];
+  const days = [startDate, addDays(startDate, 1), addDays(startDate, 2)];
   const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16];
 
   useEffect(() => {
@@ -53,9 +50,10 @@ function App() {
   }, []);
 
   useEffect(() => {
-    getAllFreeSlots(startDate, days[1](startDate))
+    getAllFreeSlots(startDate, days[2])
       .then(setFreeSlots)
       .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDate]);
 
   if (step === "landing") {
@@ -161,6 +159,3 @@ function App() {
 }
 
 export default App;
-function then(setFreeSlots: Dispatch<SetStateAction<FreeSlot[]>>) {
-  throw new Error("Function not implemented.");
-}
