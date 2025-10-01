@@ -213,8 +213,26 @@ function App() {
             className="w-full mb-4 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
-            onClick={() => setStep("confirmation")}
-            className="w-full px-6 py-3 rounded bg-black text-white"
+            disabled={!name.trim() || !room}
+            onClick={async () => {
+              if (!room) return;
+              try {
+                await postBooking({
+                  roomId: room.roomId,
+                  date: room.date,
+                  hour: room.hour,
+                  bookerName: name.trim(),
+                });
+                setStep("confirmation");
+              } catch (e: unknown) {
+                if (e instanceof Error) {
+                  alert(e.message || "Kunde inte boka");
+                } else {
+                  alert("Kunde inte boka");
+                }
+              }
+            }}
+            className="w-full px-6 py-3 rounded bg-black text-white disabled:opacity-50"
           >
             Boka
           </button>
