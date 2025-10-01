@@ -7,7 +7,7 @@ import {
   type FreeSlot,
 } from "./apiRequests";
 
-type Step = "landing" | "booking" | "personalInfo" | "confirmation";
+type Step = "landing" | "booking" | "personalInfo";
 type Column = { date: string; room: Room };
 
 // Helper functions to format the Date
@@ -59,6 +59,7 @@ function App() {
   const [freeSlots, setFreeSlots] = useState<FreeSlot[]>([]);
   const [startDate, setStartDate] = useState(todayISO());
   const days = [startDate, addDays(startDate, 1), addDays(startDate, 2)];
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     getAllRooms()
@@ -223,7 +224,7 @@ function App() {
                   hour: room.hour,
                   bookerName: name.trim(),
                 });
-                setStep("confirmation");
+                setConfirmOpen(true);
               } catch (e: unknown) {
                 if (e instanceof Error) {
                   alert(e.message || "Kunde inte boka");
@@ -237,36 +238,38 @@ function App() {
             Boka
           </button>
         </div>
-      </div>
-    );
-  }
-
-  if (step === "confirmation") {
-    return (
-      <div className="min-h-screen grid place-items-center bg-gray-50">
-        <div className="max-w-sm w-full p-6 text-center">
-          <h1 className="text-2xl font-bold mb-8 text-left">
-            Ditt rum är nu bokat!
-          </h1>
-          <p>
-            Du är {name} och valde rum {room?.roomId} {room?.date}
-            {room?.hour}
-          </p>
-          <button
-            onClick={() => {
-              setStep("landing");
-              setName("");
-            }}
-            className="w-full px-6 py-3 rounded bg-black text-white"
+        {confirmOpen && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="fixed inset-0 z-50 grid place-items-center bg-black/40"
           >
-            Tillbaka
-          </button>
-        </div>
+            <div className="bg-white rounded-xl shadow p-6 w-full max-w-sm text-center">
+              <div className="text-lg font-semibold mb-2">
+                <p>Ditt rum är bokat!</p>
+                <p>😃</p>
+              </div>
+              <button
+                className="mt-2 px-4 py-2 rounded bg-black text-white"
+                onClick={async () => {
+                  setConfirmOpen(false);
+                  setRoom(null);
+                  await getAllFreeSlots(startDate, addDays(startDate, 2)).then(
+                    setFreeSlots
+                  );
+                  setStep("landing");
+                }}
+              >
+                Tillbaka
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
-  return <p>How dig you get here?</p>;
+  return <p>How did you get here?</p>;
 }
 
 export default App;
