@@ -78,10 +78,12 @@ function App() {
     const dayCols = days; // exactly 3 columns
     const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16];
 
-    // helper: free slots for a given day+hour limited by current room filter
+    // Filter free slots by selected rooms IDS (empty selection = all rooms)
     const visibleIdSet = new Set(
       selectedRoomIds.length ? selectedRoomIds : rooms.map((room) => room.id)
     );
+
+    // Returns all free slots for a given day+hour, filtered by visible room IDs
     const slotsFor = (date: string, hour: number) =>
       freeSlots.filter(
         (slot) =>
@@ -156,7 +158,8 @@ function App() {
                   </div>
                 ))}
 
-                {/* for each hour, render 3 cells (one per day) */}
+                {/* For each hour, render a cell per day. (3 days)
+                 Each cell stacks buttons for all free rooms at that time. */}
                 {hours.map((h) =>
                   dayCols.map((d) => {
                     const slotsAt = slotsFor(d, h); // all free rooms for this day+hour
